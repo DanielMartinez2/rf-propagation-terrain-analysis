@@ -1,4 +1,4 @@
 # Outputs derived from the experimental scripts are reproducible and can be large.
 *.txt
 *.png
-!scripts\results\coverage_comparison.png
+!coverage_comparison.png
