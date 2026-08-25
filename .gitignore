@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 *_generated.csv
 *_generated.txt
+map_results/
+scripts_original/

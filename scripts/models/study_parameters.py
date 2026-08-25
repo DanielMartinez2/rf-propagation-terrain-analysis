@@ -9,5 +9,15 @@ FREQUENCY_MHZ = 509
 
 RECEIVER_GAIN_DBI = 2.15
 TRANSMITTER_GAIN_DBD = 9.29
+DBI_PER_DBD = 2.15
+
+# Lee urban reference: Philadelphia. Keep P0 and slope together unless field
+# measurements are used to calibrate both values for a different environment.
+LEE_REFERENCE_RECEIVED_POWER_DBM = -70.0
+LEE_DISTANCE_SLOPE_DB_PER_DECADE = 36.8
+LEE_REFERENCE_FREQUENCY_MHZ = 900
+LEE_FREQUENCY_CORRECTION = 3.0
 
 SPEED_OF_LIGHT_M_S = 299_792_458
+PROFILE_TOTAL_DISTANCE_M = 69_960
+PROFILE_STEP_M = 30

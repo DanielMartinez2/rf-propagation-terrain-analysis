@@ -5,16 +5,19 @@ import pandas as pd
 
 from study_parameters import (
     ANTENNA_HEIGHT_M,
+    DBI_PER_DBD,
     FREQUENCY_MHZ,
+    RECEIVER_GAIN_DBI,
     RECEIVER_HEIGHT_M,
     TRANSMITTER_GROUND_ELEVATION_M,
+    TRANSMITTER_GAIN_DBD,
     TRANSMITTER_POWER_W,
 )
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-INPUT_DIR = ROOT_DIR / "data" / "processed" / "corrected_profiles"
-OUTPUT_FILE = ROOT_DIR / "results" / "propagation_models" / "okumura_hata.txt"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+INPUT_DIR = SCRIPTS_DIR / "results" / "corrected_profiles"
+OUTPUT_FILE = SCRIPTS_DIR / "results" / "propagation_models" / "okumura_hata.txt"
 
 
 def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
@@ -28,6 +31,7 @@ def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
 
 
 def main() -> None:
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     arquivos = sorted(INPUT_DIR.glob("*.txt"))
     if not arquivos:
         print(f"Nenhum perfil corrigido encontrado em: {INPUT_DIR}")
@@ -40,6 +44,7 @@ def main() -> None:
 
 def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     df = pd.read_table(caminho_arquivo, sep=";")
+    df.columns = df.columns.str.strip()
 
     altitude = df["altitude (m)"].values.tolist()
     distance_m = df["distance_m"].values.tolist()
@@ -49,7 +54,7 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     a_rx = RECEIVER_HEIGHT_M
     p_rx = []
     p_tx_watts = TRANSMITTER_POWER_W
-    log_p_tx = 10 * np.log10(p_tx_watts)
+    log_p_tx = 10 * np.log10(p_tx_watts) + TRANSMITTER_GAIN_DBD + DBI_PER_DBD + RECEIVER_GAIN_DBI
     freq_mhz = FREQUENCY_MHZ
     log_freq = np.log10(freq_mhz)
     a_hrx = 3.2 * np.log10(11.75 * a_rx) ** 2 - 4.97

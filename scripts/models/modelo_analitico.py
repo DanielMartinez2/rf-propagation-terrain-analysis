@@ -5,17 +5,21 @@ import pandas as pd
 
 from study_parameters import (
     ANTENNA_HEIGHT_M,
+    DBI_PER_DBD,
     FREQUENCY_MHZ,
+    PROFILE_STEP_M,
     RECEIVER_HEIGHT_M,
+    RECEIVER_GAIN_DBI,
     SPEED_OF_LIGHT_M_S,
     TRANSMITTER_GROUND_ELEVATION_M,
+    TRANSMITTER_GAIN_DBD,
     TRANSMITTER_POWER_W,
 )
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-INPUT_DIR = ROOT_DIR / "data" / "processed" / "corrected_profiles"
-OUTPUT_FILE = ROOT_DIR / "results" / "propagation_models" / "modelo_analitico.txt"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+INPUT_DIR = SCRIPTS_DIR / "results" / "corrected_profiles"
+OUTPUT_FILE = SCRIPTS_DIR / "results" / "propagation_models" / "modelo_analitico.txt"
 
 
 def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
@@ -29,6 +33,7 @@ def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
 
 
 def main() -> None:
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     arquivos = sorted(INPUT_DIR.glob("*.txt"))
     if not arquivos:
         print(f"Nenhum perfil corrigido encontrado em: {INPUT_DIR}")
@@ -41,10 +46,12 @@ def main() -> None:
 
 def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     df = pd.read_table(caminho_arquivo, sep=";")
+    df.columns = df.columns.str.strip()
 
     altitude = df["altitude (m)"].values.tolist()
     distance_m = df["distance_m"].values.tolist()
     obstruct = df["obstrucao"].values.tolist()
+    obstruction_distance_m = df["dominant_obstruction_distance_m"].values.tolist()
 
     antena = ANTENNA_HEIGHT_M
     cota_tx = TRANSMITTER_GROUND_ELEVATION_M
@@ -61,7 +68,7 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     h_roof = 3 * n + 3
     delta_hm = h_roof - a_rx
     delta_hb = antena - h_roof
-    d = 30
+    d = PROFILE_STEP_M
 
     for i in range(len(altitude) - 1):
         tg_teta = (soma_cot_tx - altitude[i] - a_rx) / distance_m[i]
@@ -73,19 +80,9 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
         else:
             l0 = 32.45 + 20 * np.log10(hipotenusa / 1000) + 20 * np.log10(freq_mhz)
             lmsd = 20 * np.log10(2.35 * (delta_hb * 1000 / hipotenusa * np.sqrt(d / lambda1)) ** 0.9)
-            x2 = delta_hm
             lrts = 0
-            flag = True
-
-            for j in range(i, len(altitude)):
-                x1 = tg_teta * distance_m[j]
-                if soma_cot_tx > altitude[j] + a_rx:
-                    y = x1 + altitude[j] + a_rx
-                    if altitude[j] >= y and flag:
-                        x2 = 69960 - distance_m[j]
-                        flag = False
-
-            if x2 != delta_hm:
+            if not pd.isna(obstruction_distance_m[i]):
+                x2 = obstruction_distance_m[i]
                 teta = np.arctan(delta_hm / x2)
                 r = np.sqrt(delta_hm**2 + x2**2)
                 aux = lambda1 / (2 * r * np.pi**2)
@@ -93,7 +90,7 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
 
             lp = l0 - lrts + lmsd
 
-        prx_dbm = 10 * np.log10(p_tx_watts * 1000) - lp
+        prx_dbm = 10 * np.log10(p_tx_watts * 1000) + TRANSMITTER_GAIN_DBD + DBI_PER_DBD + RECEIVER_GAIN_DBI - lp
         p_rx.append(prx_dbm)
 
     p_rx.append(p_rx[-1])

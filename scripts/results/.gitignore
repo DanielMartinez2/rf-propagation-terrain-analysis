@@ -1,0 +1,3 @@
+# Outputs derived from the experimental scripts are reproducible and can be large.
+*.txt
+*.png

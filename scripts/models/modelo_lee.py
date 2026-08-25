@@ -5,7 +5,12 @@ import pandas as pd
 
 from study_parameters import (
     ANTENNA_HEIGHT_M,
+    DBI_PER_DBD,
     FREQUENCY_MHZ,
+    LEE_DISTANCE_SLOPE_DB_PER_DECADE,
+    LEE_FREQUENCY_CORRECTION,
+    LEE_REFERENCE_FREQUENCY_MHZ,
+    LEE_REFERENCE_RECEIVED_POWER_DBM,
     RECEIVER_GAIN_DBI,
     RECEIVER_HEIGHT_M,
     TRANSMITTER_GAIN_DBD,
@@ -14,9 +19,9 @@ from study_parameters import (
 )
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-INPUT_DIR = ROOT_DIR / "data" / "processed" / "corrected_profiles"
-OUTPUT_FILE = ROOT_DIR / "results" / "propagation_models" / "lee_model.txt"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+INPUT_DIR = SCRIPTS_DIR / "results" / "corrected_profiles"
+OUTPUT_FILE = SCRIPTS_DIR / "results" / "propagation_models" / "lee_model.txt"
 
 
 def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
@@ -30,6 +35,7 @@ def salvar_dataframe(df: pd.DataFrame, output_path: Path) -> Path:
 
 
 def main() -> None:
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     arquivos = sorted(INPUT_DIR.glob("*.txt"))
     if not arquivos:
         print(f"Nenhum perfil corrigido encontrado em: {INPUT_DIR}")
@@ -42,6 +48,7 @@ def main() -> None:
 
 def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     df = pd.read_table(caminho_arquivo, sep=";")
+    df.columns = df.columns.str.strip()
 
     altitude = df["altitude (m)"].values.tolist()
     distance_m = df["distance_m"].values.tolist()
@@ -52,11 +59,9 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     p_rx = []
     p_tx_watts = TRANSMITTER_POWER_W
     g_rx_dbi = RECEIVER_GAIN_DBI
-    g_rx_dbd = g_rx_dbi - 2.5
+    g_rx_dbd = g_rx_dbi - DBI_PER_DBD
     g_tx_dbd = TRANSMITTER_GAIN_DBD
     freq_mhz = FREQUENCY_MHZ
-    n = 3
-    f0 = 900
     a0 = (
         20 * np.log10(antena / 30.48)
         + 10 * np.log10(p_tx_watts / 10)
@@ -70,7 +75,12 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
         tg_teta = (soma_cot_tx - altitude[i] - a_rx) / distance_m[i]
         x = tg_teta * distance_m[i]
         hipotenusa = np.sqrt(x**2 + distance_m[i] ** 2)
-        pr = -70 - 36.8 * np.log10(hipotenusa / 1000) - n * np.log10(freq_mhz / f0) + a0
+        pr = (
+            LEE_REFERENCE_RECEIVED_POWER_DBM
+            - LEE_DISTANCE_SLOPE_DB_PER_DECADE * np.log10(hipotenusa / 1000)
+            - LEE_FREQUENCY_CORRECTION * np.log10(freq_mhz / LEE_REFERENCE_FREQUENCY_MHZ)
+            + a0
+        )
         p_rx.append(pr)
 
     p_rx.append(p_rx[-1])
