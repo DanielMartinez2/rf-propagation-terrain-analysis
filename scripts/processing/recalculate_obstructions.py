@@ -1,9 +1,18 @@
 from pathlib import Path
+import sys
 
 import pandas as pd
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR / "scripts"))
+
+from models.study_parameters import (
+    ANTENNA_HEIGHT_M,
+    RECEIVER_HEIGHT_M,
+    TRANSMITTER_GROUND_ELEVATION_M,
+)
+
 INPUT_DIR = ROOT_DIR / "data" / "processed" / "line_profiles"
 OUTPUT_DIR = ROOT_DIR / "data" / "processed" / "corrected_profiles"
 
@@ -31,10 +40,10 @@ def analisa_txt(caminho_arquivo: Path) -> None:
     altitude = df["altitude (m)"].values.tolist()
     distance_m = df["distance_m"].values.tolist()
 
-    antena = 155.98
-    cota_tx = 825.8
+    antena = ANTENNA_HEIGHT_M
+    cota_tx = TRANSMITTER_GROUND_ELEVATION_M
     soma_cot_tx = antena + cota_tx
-    a_rx = 9.1
+    a_rx = RECEIVER_HEIGHT_M
     obstruct = []
 
     for i in range(len(altitude) - 1):

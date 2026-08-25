@@ -1,9 +1,14 @@
 from pathlib import Path
+import sys
 
 import pandas as pd
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR / "scripts"))
+
+from models.study_parameters import ANTENNA_HEIGHT_M, TRANSMITTER_GROUND_ELEVATION_M
+
 INPUT_DIR = ROOT_DIR / "data" / "intermediate" / "gpx_txt_converted"
 OUTPUT_DIR = ROOT_DIR / "data" / "processed" / "line_profiles"
 TARGET_LENGTH = 2333
@@ -57,8 +62,8 @@ def analisa_txt(caminho_arquivo: Path) -> None:
     name = df["name"].values.tolist()
     altitude = df["altitude (m)"].values.tolist()
 
-    antena = 155.98
-    cota_tx = 825.8
+    antena = ANTENNA_HEIGHT_M
+    cota_tx = TRANSMITTER_GROUND_ELEVATION_M
     soma_cot_tx = antena + cota_tx
     a_rx = 1.0
     alt_x = []

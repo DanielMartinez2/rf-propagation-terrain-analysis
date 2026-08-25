@@ -3,6 +3,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from study_parameters import (
+    ANTENNA_HEIGHT_M,
+    FREQUENCY_MHZ,
+    RECEIVER_HEIGHT_M,
+    SPEED_OF_LIGHT_M_S,
+    TRANSMITTER_GROUND_ELEVATION_M,
+    TRANSMITTER_POWER_W,
+)
+
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 INPUT_DIR = ROOT_DIR / "data" / "processed" / "corrected_profiles"
@@ -37,16 +46,16 @@ def analisa_txt(caminho_arquivo: Path) -> pd.DataFrame:
     distance_m = df["distance_m"].values.tolist()
     obstruct = df["obstrucao"].values.tolist()
 
-    antena = 155.98
-    cota_tx = 825.8
+    antena = ANTENNA_HEIGHT_M
+    cota_tx = TRANSMITTER_GROUND_ELEVATION_M
     soma_cot_tx = antena + cota_tx
-    a_rx = 9.1
+    a_rx = RECEIVER_HEIGHT_M
     p_rx = []
-    p_tx_watts = 15000
-    freq_mhz = 509
+    p_tx_watts = TRANSMITTER_POWER_W
+    freq_mhz = FREQUENCY_MHZ
     log_freq = np.log10(freq_mhz)
     freq_hz = freq_mhz * 10**6
-    c_metro_seg = 299792458
+    c_metro_seg = SPEED_OF_LIGHT_M_S
     lambda1 = c_metro_seg / freq_hz
     n = 16
     h_roof = 3 * n + 3

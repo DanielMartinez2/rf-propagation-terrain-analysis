@@ -48,6 +48,13 @@ Instale as dependencias com:
 pip install -r requirements.txt
 ```
 
+## Parametros do estudo
+
+Os dados da antena e do transmissor ficam centralizados em
+`scripts/models/study_parameters.py`. Para analisar outra instalacao, ajuste
+esse arquivo antes de executar o fluxo: altura da antena, cota do terreno do
+transmissor, altura do receptor, potencia, frequencia e ganhos.
+
 ## Chave da API do Google Maps
 
 O script `scripts/selection/fetch_elevation.py` nao guarda mais chave no codigo. Antes de executar, defina:
